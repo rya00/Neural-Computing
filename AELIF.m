@@ -1,148 +1,129 @@
 % Adaptive Exponential LIF (AELIF) Model Parameters
-E_L = -75; % Leak reversal potential (mV)
-V_th = -50; % Threshold potential (mV)
-V_reset = -80; % Reset potential (mV)
-Delta_th = 2; % Exponential threshold factor (mV)
-g_L = 10; % Leak conductance (nS)
-C_m = 100; % Membrane capacitance (pF)
-a = 2; % Subthreshold adaptation (nS)
-b = 0.02; % Spike-triggered adaptation increment (nA)
-tau_SRA = 200; % Adaptation time constant (ms)
+E_L = -75e-3;          % Leak reversal potential (V)
+V_th = -50e-3;         % Threshold potential (V)
+V_reset = -80e-3;      % Reset potential (V)
+Delta_th = 2e-3;       % Exponential threshold factor (V)
+g_L = 10e-9;           % Leak conductance (S)
+C_m = 100e-12;         % Membrane capacitance (F)
+a = 2e-9;              % Subthreshold adaptation (S)
+b = 20e-12;            % Spike-triggered adaptation increment (A)
+tau_SRA = 0.2;         % Adaptation time constant (s)
 
-% Simulation Parameters and Create Time Vector
-dt = 0.1; % Time step (ms)
-T = 1500; % Total simulation time (ms)
-time = 0:dt:T; % Time vector
+% Simulation Parameters and Time Vector
+dt = 0.0001;           % Time step (s)
+T = 1.5;               % Total simulation time (s)
+time = 0:dt:T;         % Time vector
 
 % Define input current pulse (500 pA from 0.5s to 1.0s)
-I_app = 500; % Applied current (pA)
+I_app = 500e-12;       % Applied current (A)
 I_input = zeros(size(time));
-I_input(time >= 500 & time <= 1000) = I_app;
+I_input(time >= 0.5 & time <= 1.0) = I_app;
 
-% Initial variables
-V = E_L; % Initial Membrane potential (mV)
-I_SRA = 0; % Initial Adaptation current (nA)
+% Initialize Variables
+V = E_L;               % Initial Membrane potential (V)
+I_SRA = 0;             % Initial Adaptation current (A)
 V_trace = zeros(size(time)); % Store Membrane potential
 I_SRA_trace = zeros(size(time)); % Store Adaptation conductance
 
-% Simulation loop
+% Simulation Loop
 for t = 1:length(time)
-    % Calculate currents
-    I_leak = g_L * (E_L - V); % Leak current (pA)
-    I_exp = g_L * Delta_th * exp((V - V_th) / Delta_th); % Exponential current (pA)
+    % Calculate Currents
+    I_leak = g_L * (E_L - V); % Leak current (A)
+    I_exp = g_L * Delta_th * exp((V - V_th) / Delta_th); % Exponential current (A)
 
-    % Update membrane potential using Euler method
+    % Update Membrane Potential Using Euler Method
     dVdt = (I_leak + I_exp + I_input(t) - I_SRA) / C_m;
     V = V + dt * dVdt;
 
-    % Check for spike and reset threshold if reached
+    % Check for Spike and Reset Threshold if Reached
     if V > V_th
         V = V_reset;
         I_SRA = I_SRA + b; % Spike-triggered adaptation
     end
 
-    % Update adaptation current
+    % Update Adaptation Current
     dI_SRA_dt = (a * (V - E_L) - I_SRA) / tau_SRA;
     I_SRA = I_SRA + dt * dI_SRA_dt;
 
-    % Store results
+    % Store Results
     V_trace(t) = V;
     I_SRA_trace(t) = I_SRA;
 end
 
-% Set consistent font size and style for all plots
-set(0, 'DefaultAxesFontSize', 12)
-set(0, 'DefaultAxesFontName', 'Arial')
-
-% Plot results for Part A
+% Plot Results for Part A
 figure;
 subplot(2, 1, 1);
-plot(time, I_input);
-xlabel('Time (ms)', 'FontWeight', 'bold');
+plot(time, I_input * 1e12); % Convert to pA for plotting
+xlabel('Time (s)', 'FontWeight', 'bold');
 ylabel('Input Current (pA)', 'FontWeight', 'bold');
 title('Input Current vs Time', 'FontWeight', 'bold');
 grid on;
 
 subplot(2, 1, 2);
-plot(time, V_trace);
-xlabel('Time (ms)', 'FontWeight', 'bold');
+plot(time, V_trace * 1e3); % Convert to mV for plotting
+xlabel('Time (s)', 'FontWeight', 'bold');
 ylabel('Membrane Potential (mV)', 'FontWeight', 'bold');
 title('Membrane Potential vs Time', 'FontWeight', 'bold');
 grid on;
 
-sgtitle('AELIF Model Simulation', 'FontSize', 16, 'FontWeight', 'bold');
-set(gcf, 'Position', [100, 100, 800, 600]);
+sgtitle('AELIF Model Simulation: Part A', 'FontSize', 16, 'FontWeight', 'bold');
 
 % Parameters for Part B
-dt_B = 0.1; % Time step (ms)
-T_B = 5000; % Total simulation time (ms)
-time_B = 0:dt_B:T_B; % Time vector
+T_B = 5;               % Total simulation time (s)
+time_B = 0:dt:T_B;     % Time vector
+I_range = linspace(0, 1e-9, 20); % Range of applied currents (A)
 
-I_range = linspace(0, 1000, 20); % Range of applied currents (pA)
-firing_rates = zeros(size(I_range)); % Steady-state firing rates
-initial_firing_rates = zeros(size(I_range)); % Initial firing rates
+% Storage for Results
+initial_firing_rates = zeros(size(I_range)); % Initial firing rates (Hz)
+steady_firing_rates = zeros(size(I_range));  % Steady-state firing rates (Hz)
 
-% Vectorized simulation for f-I curve
-V_B = E_L * ones(length(time_B), length(I_range));
-I_SRA_B = zeros(length(time_B), length(I_range));
+% Simulation for f-I Curve
+V_B = E_L * ones(length(time_B), length(I_range)); % Membrane potentials
+I_SRA_B = zeros(length(time_B), length(I_range));  % Adaptation currents
 spike_times_B = cell(1, length(I_range));
 
 for t_B = 2:length(time_B)
-    % Update membrane potential
-    I_leak_B = g_L * (E_L - V_B(t_B-1, :));
-    I_exp_B = g_L * Delta_th * exp((V_B(t_B-1, :) - V_th) / Delta_th);
+    % Update Membrane Potential
+    I_leak_B = g_L * (E_L - V_B(t_B-1, :)); % Leak current (A)
+    I_exp_B = g_L * Delta_th * exp((V_B(t_B-1, :) - V_th) / Delta_th); % Exponential current (A)
     dVdt_B = (I_leak_B + I_exp_B + I_range - I_SRA_B(t_B-1, :)) / C_m;
-    V_B(t_B, :) = V_B(t_B-1, :) + dt_B * dVdt_B;
-    
-    % Check for spikes
+    V_B(t_B, :) = V_B(t_B-1, :) + dt * dVdt_B;
+
+    % Check for Spikes
     spike_indices = V_B(t_B, :) > V_th;
-    V_B(t_B, spike_indices) = V_reset;
+    V_B(t_B, spike_indices) = V_reset; % Reset potential
     I_SRA_B(t_B, spike_indices) = I_SRA_B(t_B-1, spike_indices) + b;
-    
-    % Record spike times
+
+    % Record Spike Times
     for i = find(spike_indices)
-        spike_times_B{i}(end + 1) = t_B * dt_B;
+        spike_times_B{i}(end + 1) = t_B * dt;
     end
-    
-    % Update adaptation current
+
+    % Update Adaptation Current
     dI_SRA_dt_B = (a * (V_B(t_B, :) - E_L) - I_SRA_B(t_B-1, :)) / tau_SRA;
-    I_SRA_B(t_B, :) = I_SRA_B(t_B-1, :) + dt_B * dI_SRA_dt_B;
+    I_SRA_B(t_B, :) = I_SRA_B(t_B-1, :) + dt * dI_SRA_dt_B;
 end
 
-% Calculate firing rates
+% Calculate Firing Rates
 for i = 1:length(I_range)
     if length(spike_times_B{i}) > 1
-        ISIs_B = diff(spike_times_B{i});
-        initial_firing_rates(i) = 1000 / ISIs_B(1);
-        steady_state_ISIs = ISIs_B(end - min(10, length(ISIs_B)-1):end);
-        firing_rates(i) = 1000 / mean(steady_state_ISIs);
+        ISIs_B = diff(spike_times_B{i}); % Interspike intervals (s)
+        initial_firing_rates(i) = 1 / ISIs_B(1); % Initial firing rate (Hz)
+        steady_firing_rates(i) = 1 / mean(ISIs_B(end - min(10, length(ISIs_B)-1):end)); % Steady-state rate (Hz)
     else
         initial_firing_rates(i) = 0;
-        firing_rates(i) = 0;
+        steady_firing_rates(i) = 0;
     end
 end
 
-% Plot the f-I curve
+% Plot f-I Curve for Part B
 figure;
-plot(I_range, firing_rates, '-o', 'DisplayName', 'Steady-State Firing Rate');
 hold on;
-plot(I_range, initial_firing_rates, 'x', 'DisplayName', 'Initial Firing Rate');
-xlabel('Applied Current (pA)');
-ylabel('Firing Rate (Hz)');
-title('f-I Curve for AELIF Model');
-legend;
+plot(I_range * 1e12, steady_firing_rates, 'k-', 'DisplayName', 'Steady-State Firing Rate'); % pA
+plot(I_range * 1e12, initial_firing_rates, 'ko', 'DisplayName', 'Initial Firing Rate');
+xlabel('Applied Current (pA)', 'FontWeight', 'normal');
+ylabel('Firing Rate (Hz)', 'FontWeight', 'normal');
+title('f-I Curve for AELIF Model', 'FontWeight', 'normal');
+legend('show');
 grid on;
-
-% Check if firing rate range is adequate
-max_firing_rate = max(firing_rates);
-if max_firing_rate < 50
-    warning('Maximum firing rate (%.2f Hz) is below 50 Hz. Consider increasing the current range.', max_firing_rate);
-elseif max_firing_rate > 60
-    warning('Maximum firing rate (%.2f Hz) exceeds 60 Hz. Consider decreasing the current range.', max_firing_rate);
-else
-    disp('Firing rate range is appropriate (0 to 50+ Hz).');
-end
-
-% Comment on results
-disp('The initial firing rates are generally higher than the steady-state firing rates due to adaptation.');
-disp('At higher applied currents, the difference between initial and steady-state rates increases, reflecting stronger adaptation effects.');
+hold off;
