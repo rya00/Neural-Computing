@@ -68,62 +68,80 @@ grid on;
 
 sgtitle('AELIF Model Simulation: Part A', 'FontSize', 16, 'FontWeight', 'bold');
 
-% Parameters for Part B
-T_B = 5;               % Total simulation time (s)
-time_B = 0:dt:T_B;     % Time vector
-I_range = linspace(0, 1e-9, 20); % Range of applied currents (A)
+% Simulation Parameters
+%% Part B: f-I Curve Simulation
+I_base = 0e-9;                 % Baseline current (A)
 
-% Storage for Results
-initial_firing_rates = zeros(size(I_range)); % Initial firing rates (Hz)
-steady_firing_rates = zeros(size(I_range));  % Steady-state firing rates (Hz)
+V_max = 50e-3;              % level of voltage to detect a spike
 
-% Simulation for f-I Curve
-V_B = E_L * ones(length(time_B), length(I_range)); % Membrane potentials
-I_SRA_B = zeros(length(time_B), length(I_range));  % Adaptation currents
-spike_times_B = cell(1, length(I_range));
+dt = 2e-6;                  % time-step in sec
+t_max = 5;                   % maximum time in sec
+t_vector = 0:dt:t_max;        % vector of all the time points
 
-for t_B = 2:length(time_B)
-    % Update Membrane Potential
-    I_leak_B = g_L * (E_L - V_B(t_B-1, :)); % Leak current (A)
-    I_exp_B = g_L * Delta_th * exp((V_B(t_B-1, :) - V_th) / Delta_th); % Exponential current (A)
-    dVdt_B = (I_leak_B + I_exp_B + I_range - I_SRA_B(t_B-1, :)) / C_m;
-    V_B(t_B, :) = V_B(t_B-1, :) + dt * dVdt_B;
+I = I_base*ones(size(t_vector)); % baseline current added to all time points
 
-    % Check for Spikes
-    spike_indices = V_B(t_B, :) > V_th;
-    V_B(t_B, spike_indices) = V_reset; % Reset potential
-    I_SRA_B(t_B, spike_indices) = I_SRA_B(t_B-1, spike_indices) + b;
+current_range = [0.15:0.005:0.5]*1e-9;    % list of applied currents
 
-    % Record Spike Times
-    for i = find(spike_indices)
-        spike_times_B{i}(end + 1) = t_B * dt;
+initial_rate = zeros(size(current_range)); % array to store 1/(first ISI)
+final_rate = zeros(size(current_range));   % array to store 1/(final ISI)
+single_spike = zeros(size(current_range)); % array to store "1" for only 1 spike
+mean_V = zeros(size(current_range));
+
+for i = 1:length(current_range)           % loop through applied currents
+    I_app_b = current_range(i);
+    I(:) = I_app_b;                    % update with new applied current for all time points
+    
+    v = zeros(size(t_vector));       % initialize voltage array
+    v(1) = E_L;                     % set value of initial membrane potential
+    I_sra = zeros(size(t_vector));   % initialize adaptation current
+    spikes = zeros(size(t_vector));  % initialize vector to store spikes
+    
+    for j = 1:length(t_vector)-1     % simulation for all time points
+        
+        if ( v(j) > V_max )              % if there is a spike
+            v(j) = V_reset;             % reset the voltage
+            I_sra(j) = I_sra(j) + b;    % increase the adaptation current by b
+            spikes(j) = 1;              % record the spike
+        end
+        
+        % next line integrates the voltage over time, first part is like LIF
+        % second part is an exponential spiking term
+        % third part includes adaptation
+        v(j+1) = v(j) + dt*( g_L*(E_L-v(j) + Delta_th*exp((v(j)-V_th)/Delta_th) ) ...
+            - I_sra(j) + I(j))/C_m;
+        
+        % next line decays the adaptation toward a steady state in between spikes
+        I_sra(j+1) = I_sra(j) + dt*( a*(v(j)-E_L) - I_sra(j) )/tau_SRA;
+        
     end
-
-    % Update Adaptation Current
-    dI_SRA_dt_B = (a * (V_B(t_B, :) - E_L) - I_SRA_B(t_B-1, :)) / tau_SRA;
-    I_SRA_B(t_B, :) = I_SRA_B(t_B-1, :) + dt * dI_SRA_dt_B;
-end
-
-% Calculate Firing Rates
-for i = 1:length(I_range)
-    if length(spike_times_B{i}) > 1
-        ISIs_B = diff(spike_times_B{i}); % Interspike intervals (s)
-        initial_firing_rates(i) = 1 / ISIs_B(1); % Initial firing rate (Hz)
-        steady_firing_rates(i) = 1 / mean(ISIs_B(end - min(10, length(ISIs_B)-1):end)); % Steady-state rate (Hz)
+    
+    spike_times = dt*find(spikes);           % extract the spike times
+    
+    if ( length(spike_times) > 1 )           % if there is more than 1 spike
+        ISIs = diff(spike_times);            % ISI = interval between spikes
+        initial_rate(i) = 1/ISIs(1);         % inverse of first ISI
+        if ( length(ISIs) > 1 )             % if there are further ISIs
+            final_rate(i) = 1/ISIs(end);     % inverse of final ISI
+        end
     else
-        initial_firing_rates(i) = 0;
-        steady_firing_rates(i) = 0;
+        if ( length(spike_times) == 1 )      % if there is only one spike
+            single_spike(i) = 1;             % record "1" for this trial
+        end
     end
+    
+    mean_V(i) = mean(v);
 end
 
 % Plot f-I Curve for Part B
 figure;
-hold on;
-plot(I_range * 1e12, steady_firing_rates, 'k-', 'DisplayName', 'Steady-State Firing Rate'); % pA
-plot(I_range * 1e12, initial_firing_rates, 'ko', 'DisplayName', 'Initial Firing Rate');
-xlabel('Applied Current (pA)', 'FontWeight', 'normal');
-ylabel('Firing Rate (Hz)', 'FontWeight', 'normal');
-title('f-I Curve for AELIF Model', 'FontWeight', 'normal');
-legend('show');
-grid on;
+hold on;                            % Allow many plots on same graph
+plot(1e9*current_range, final_rate, 'b', 'LineWidth', 2);     
+ISIindices = find(initial_rate);     % Find points where a first ISI exists
+plot(1e9*current_range(ISIindices), initial_rate(ISIindices), 'ro', 'MarkerSize', 6);
+ISIindices = find(single_spike);     % Find points with just one spike (no ISI)
+plot(1e9*current_range(ISIindices), 0*single_spike(ISIindices), '*k', 'MarkerSize', 8);
+xlabel('Iapp (nA)');                % Label x-axis
+ylabel('Spike Rate (Hz)');          % Label y-axis
+legend('Final Rate', '1/ISI(1)', 'Single spike');
 hold off;
+grid on;

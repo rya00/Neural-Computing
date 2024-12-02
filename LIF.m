@@ -120,12 +120,12 @@ end
 % Plot f-I Curve for Part B
 figure;
 hold on;
-plot(I_range * 1e12, steady_rate, 'k-', 'DisplayName', 'Steady-State Firing Rate');
-plot(I_range * 1e12, initial_rate, 'ko', 'DisplayName', '1 / Initial ISI');
-plot(I_range(single_spike == 1) * 1e12, zeros(sum(single_spike), 1), 'k*', 'MarkerSize', 8, 'DisplayName', 'Single Spike');
-xlabel('I_{app} (pA)', 'FontWeight', 'normal');
-ylabel('Firing Rate (Hz)', 'FontWeight', 'normal');
-title('f-I Curve (Part B)', 'FontWeight', 'normal');
+plot(I_range * 1e12, steady_rate, 'b-', 'LineWidth', 2, 'DisplayName', 'Steady-State Firing Rate');
+plot(I_range * 1e12, initial_rate, 'ro', 'MarkerSize', 6, 'LineWidth', 1.5, 'DisplayName', '1 / Initial ISI');
+plot(I_range(single_spike == 1) * 1e12, zeros(sum(single_spike), 1), 'g*', 'MarkerSize', 8, 'LineWidth', 1.5, 'DisplayName', 'Single Spike');
+xlabel('I_{app} (pA)', 'FontWeight', 'bold');
+ylabel('Firing Rate (Hz)', 'FontWeight', 'bold');
+title('f-I Curve (Part B)', 'FontWeight', 'bold');
 legend('show');
 grid on;
 hold off;
