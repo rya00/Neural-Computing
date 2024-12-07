@@ -46,7 +46,6 @@ plot(t, I_app * 1e9); % Convert current to nA for readability
 xlabel("Time (s)", 'FontSize', 12); 
 ylabel("I_{app} (nA)", 'FontSize', 12);
 title("Part A: Applied Current", 'FontSize', 14, 'FontWeight', 'bold');
-ylim([-0.5, 0.5]); % Match the range of applied current
 grid on; 
 
 % Plot membrane potential
@@ -55,8 +54,7 @@ plot(t, v_sim * 1e3); % Convert voltage to mV for readability
 xlabel("Time (s)", 'FontSize', 12); 
 ylabel("V_{m} (mV)", 'FontSize', 12);
 title("Part A: Membrane Potential", 'FontSize', 14, 'FontWeight', 'bold');
-ylim([-80, -55]); % Adjust y-axis limits for better visualization
-grid on; % Add grid
+grid on;
 
 %% Part B: Subthreshold Oscillation
 % Simulates the HH model with a 0.22 nA pulse for 100 ms starting at 100 ms.
@@ -79,7 +77,6 @@ plot(t, I_app * 1e9); % Convert current to nA for readability
 xlabel("Time (s)", 'FontSize', 12);
 ylabel("I_{app} (nA)", 'FontSize', 12);
 title("Part B: Applied Current", 'FontSize', 14, 'FontWeight', 'bold');
-ylim([-0.5, 1]); % Adjust range for visualization
 grid on; 
 
 % Plot membrane potential
@@ -88,7 +85,6 @@ plot(t, v_sim * 1e3); % Convert voltage to mV for readability
 xlabel("Time (s)", 'FontSize', 12);
 ylabel("V_{m} (mV)", 'FontSize', 12);
 title("Part B: Membrane Potential", 'FontSize', 14, 'FontWeight', 'bold');
-ylim([-80, -55]); % Adjust y-axis limits
 grid on; 
 
 %% Part C: Repeated Pulses with 16 ms and 18 ms Delays
@@ -122,7 +118,6 @@ plot(t, I_app_16 * 1e9); % Convert current to nA
 xlabel("Time (s)", 'FontSize', 12);
 ylabel("I_{app} (nA)", 'FontSize', 12);
 title("Part C: Applied Current vs. Time (Delay = 16 ms)", 'FontSize', 14, 'FontWeight', 'bold');
-ylim([-0.1, 0.3]);
 grid on;
 
 % Plot Membrane Potential 
@@ -131,7 +126,6 @@ plot(t, v_sim_16 * 1e3); % Convert voltage to mV
 xlabel("Time (s)", 'FontSize', 12);
 ylabel("V_{m} (mV)", 'FontSize', 12);
 title("Part C: Membrane Potential vs. Time (Delay = 16 ms)", 'FontSize', 14, 'FontWeight', 'bold');
-ylim([-80, -55]);
 grid on;
 
 % Parameters for 18 ms delay
@@ -160,7 +154,6 @@ plot(t, I_app_18 * 1e9); % Convert current to nA
 xlabel("Time (s)", 'FontSize', 12);
 ylabel("I_{app} (nA)", 'FontSize', 12);
 title("Part C: Applied Current vs. Time (Delay = 18 ms)", 'FontSize', 14, 'FontWeight', 'bold');
-ylim([-0.1, 0.3]);
 grid on;
 
 % Plot Membrane Potential
@@ -169,7 +162,6 @@ plot(t, v_sim_18 * 1e3); % Convert voltage to mV
 xlabel("Time (s)", 'FontSize', 12);
 ylabel("V_{m} (mV)", 'FontSize', 12);
 title("Part C: Membrane Potential vs. Time (Delay = 18 ms)", 'FontSize', 14, 'FontWeight', 'bold');
-ylim([-80, -55]);
 grid on;
 
 %% Part D: Baseline Current with Periodic Dropouts
@@ -208,7 +200,6 @@ plot(t, I_app * 1e9); % Convert current to nA for plotting
 xlabel("Time (s)", 'FontSize', 12);
 ylabel("I_{app} (nA)", 'FontSize', 12);
 title("Part D: Applied Current with Periodic Dropouts", 'FontSize', 14, 'FontWeight', 'bold');
-ylim([-0.1, 0.8]);
 grid on;
 
 % Plot Membrane Potential
@@ -217,7 +208,6 @@ plot(t, v_sim * 1e3); % Convert membrane potential to mV for plotting
 xlabel("Time (s)", 'FontSize', 12);
 ylabel("V_{m} (mV)", 'FontSize', 12);
 title("Part D: Membrane Potential with Periodic Dropouts", 'FontSize', 14, 'FontWeight', 'bold');
-ylim([-80, -50]);
 grid on;
 
 %% Part E: Single Stimulus with Higher Amplitude
@@ -255,7 +245,6 @@ plot(t, I_app * 1e9); % Convert current to nA for plotting.
 xlabel("Time (s)", 'FontSize', 12);
 ylabel("I_{app} (nA)", 'FontSize', 12);
 title("Part E: Applied Current with Single Stimulus", 'FontSize', 14, 'FontWeight', 'bold');
-ylim([0.6, 1.2]);
 grid on;
 
 % Plot Membrane Potential
@@ -264,7 +253,6 @@ plot(t, v_sim * 1e3); % Convert membrane potential to mV for plotting.
 xlabel("Time (s)", 'FontSize', 12);
 ylabel("V_{m} (mV)", 'FontSize', 12);
 title("Part E: Membrane Potential with Single Stimulus", 'FontSize', 14, 'FontWeight', 'bold');
-ylim([-80, -40]);
 grid on;
 
 % Generate plots for gating variables.
@@ -277,7 +265,6 @@ xlabel("Time(s)", 'FontSize', 12);
 ylabel("Gating Variables", 'FontSize', 12);
 title("Gating Variables vs. Time (Part E)", 'FontSize', 14, 'FontWeight', 'bold');
 legend("Sodium Activation (m)", "Sodium Inactivation (h)", "Potassium Activation (n)");
-xlim([-0.05, 0.4]);
 grid on;
 
 %% Part F: Single Stimulus with Different Initial Conditions
@@ -317,7 +304,6 @@ plot(t, I_app * 1e9); % Convert current to nA for plotting.
 xlabel("Time (s)", 'FontSize', 12);
 ylabel("I_{app} (nA)", 'FontSize', 12);
 title("Part F: Applied Current with Different Initial Conditions", 'FontSize', 14, 'FontWeight', 'bold');
-ylim([0.6, 1.2]);
 grid on;
 
 % Plot Membrane Potential
@@ -326,7 +312,6 @@ plot(t, v_sim * 1e3); % Convert membrane potential to mV for plotting.
 xlabel("Time (s)", 'FontSize', 12);
 ylabel("V_{m} (mV)", 'FontSize', 12);
 title("Part F: Membrane Potential with Different Initial Conditions", 'FontSize', 14, 'FontWeight', 'bold');
-ylim([-80, -40]);
 grid on;
 
 % Generate plots for gating variables.
@@ -339,7 +324,6 @@ xlabel("Time (s)", 'FontSize', 12);
 ylabel("Gating Variables", 'FontSize', 12);
 title("Gating Variables vs. Time (Part F)", 'FontSize', 14, 'FontWeight', 'bold');
 legend("Sodium Activation (m)", "Sodium Inactivation (h)", "Potassium Activation (n)");
-xlim([-0.05, 0.4]);
 grid on;
 
 %% Hodgkin-Huxley Simulation Function

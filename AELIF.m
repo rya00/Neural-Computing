@@ -153,3 +153,5 @@ ylabel('Spike Rate (Hz)');          % Label y-axis
 legend('Final Rate', '1/ISI(1)', 'Single spike');
 hold off;
 grid on;
+
+sgtitle('AELIF f-I Curve (Part B)', 'FontSize', 16, 'FontWeight', 'bold');

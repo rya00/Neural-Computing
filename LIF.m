@@ -136,7 +136,7 @@ plot(I_range * 1e12, initial_rate, 'ro', 'MarkerSize', 6, 'LineWidth', 1.5, 'Dis
 plot(I_range(single_spike == 1) * 1e12, zeros(sum(single_spike), 1), 'g*', 'MarkerSize', 8, 'LineWidth', 1.5, 'DisplayName', 'Single Spike');
 xlabel('I_{app} (pA)', 'FontWeight', 'bold');
 ylabel('Firing Rate (Hz)', 'FontWeight', 'bold');
-title('f-I Curve (Part B)', 'FontWeight', 'bold');
+title('LIF f-I Curve (Part B)', 'FontWeight', 'bold');
 legend('show');
 grid on;
 hold off;
