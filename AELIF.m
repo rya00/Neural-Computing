@@ -1,26 +1,36 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Adaptive Exponential Leaky Integrate-and-Fire (AELIF) Neuron Model
+% This script simulates the AELIF neuron and analyzes its behavior:
+% Part A: Simulates the effect of a 500 pA pulse on the neuron for 1.5s.
+% Part B: Examines firing behavior across a range of applied currents and computes the f-I curve.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Initialization for Part A 
+clear all; % Clear all variables from the workspace
+close all; % Close all open figures
+
 % Adaptive Exponential LIF (AELIF) Model Parameters
-E_L = -75e-3;          % Leak reversal potential (V)
+E_l = -75e-3;          % Leak reversal potential (V)
 V_th = -50e-3;         % Threshold potential (V)
 V_reset = -80e-3;      % Reset potential (V)
 Delta_th = 2e-3;       % Exponential threshold factor (V)
-g_L = 10e-9;           % Leak conductance (S)
+G_l = 10e-9;           % Leak conductance (S)
 C_m = 100e-12;         % Membrane capacitance (F)
 a = 2e-9;              % Subthreshold adaptation (S)
 b = 20e-12;            % Spike-triggered adaptation increment (A)
-tau_SRA = 0.2;         % Adaptation time constant (s)
+Tau_SRA = 0.2;         % Adaptation time constant (s)
 
-% Simulation Parameters and Time Vector
+%% Simulation Parameters and Time Vector for Part A
 dt = 0.0001;           % Time step (s)
 T = 1.5;               % Total simulation time (s)
 time = 0:dt:T;         % Time vector
 
 % Define input current pulse (500 pA from 0.5s to 1.0s)
-I_app = 500e-12;       % Applied current (A)
-I_input = zeros(size(time));
-I_input(time >= 0.5 & time <= 1.0) = I_app;
+I_input = zeros(size(time)); % Initialize applied current as zero
+I_input(time >= 0.5 & time <= 1.0) = 500e-12; % Apply 500 pA during the specified interval
 
 % Initialize Variables
-V = E_L;               % Initial Membrane potential (V)
+V = E_l;               % Initial Membrane potential (V)
 I_SRA = 0;             % Initial Adaptation current (A)
 V_trace = zeros(size(time)); % Store Membrane potential
 I_SRA_trace = zeros(size(time)); % Store Adaptation conductance
@@ -28,22 +38,22 @@ I_SRA_trace = zeros(size(time)); % Store Adaptation conductance
 % Simulation Loop
 for t = 1:length(time)
     % Calculate Currents
-    I_leak = g_L * (E_L - V); % Leak current (A)
-    I_exp = g_L * Delta_th * exp((V - V_th) / Delta_th); % Exponential current (A)
+    I_leak = G_l * (E_l - V); % Leak current: passive flow towards leak potential
+    I_exp = G_l * Delta_th * exp((V - V_th) / Delta_th); % Exponential current
 
     % Update Membrane Potential Using Euler Method
-    dVdt = (I_leak + I_exp + I_input(t) - I_SRA) / C_m;
-    V = V + dt * dVdt;
+    dVdt = (I_leak + I_exp + I_input(t) - I_SRA) / C_m; % Total effect on membrane potential
+    V = V + dt * dVdt; % Euler integration step
 
     % Check for Spike and Reset Threshold if Reached
     if V > V_th
-        V = V_reset;
+        V = V_reset; % Reset membrane potential after spike
         I_SRA = I_SRA + b; % Spike-triggered adaptation
     end
 
     % Update Adaptation Current
-    dI_SRA_dt = (a * (V - E_L) - I_SRA) / tau_SRA;
-    I_SRA = I_SRA + dt * dI_SRA_dt;
+    dI_SRA_dt = (a * (V - E_l) - I_SRA) / Tau_SRA; % Adaptation dynamics
+    I_SRA = I_SRA + dt * dI_SRA_dt; % Euler integration step for adaptation current
 
     % Store Results
     V_trace(t) = V;
@@ -70,66 +80,64 @@ sgtitle('AELIF Model Simulation: Part A', 'FontSize', 16, 'FontWeight', 'bold');
 
 % Simulation Parameters
 %% Part B: f-I Curve Simulation
-I_base = 0e-9;                 % Baseline current (A)
+I_base = 0e-9;              % Baseline current
+V_max = 50e-3;              % Level of voltage to detect a spike
 
-V_max = 50e-3;              % level of voltage to detect a spike
+% Simulation Parameters and Time Vector for Part B
+dt = 2e-6;                   % Time step (s)
+t_max = 5;                   % Total simulation time (s)
+t_vector = 0:dt:t_max;       % Time vector
 
-dt = 2e-6;                  % time-step in sec
-t_max = 5;                   % maximum time in sec
-t_vector = 0:dt:t_max;        % vector of all the time points
+I = I_base*ones(size(t_vector));          % Initialize input current vector
+current_range = [0.15:0.005:0.5]*1e-9;    % Range of applied currents
 
-I = I_base*ones(size(t_vector)); % baseline current added to all time points
+% Initialize Storage for Results
+initial_rate = zeros(size(current_range)); % Store initial spike rate
+final_rate = zeros(size(current_range));   % Store steady-state spike rate
+single_spike = zeros(size(current_range)); % Track trials with a single spike
+mean_V = zeros(size(current_range));       % Average membrane potential
 
-current_range = [0.15:0.005:0.5]*1e-9;    % list of applied currents
-
-initial_rate = zeros(size(current_range)); % array to store 1/(first ISI)
-final_rate = zeros(size(current_range));   % array to store 1/(final ISI)
-single_spike = zeros(size(current_range)); % array to store "1" for only 1 spike
-mean_V = zeros(size(current_range));
-
-for i = 1:length(current_range)           % loop through applied currents
-    I_app_b = current_range(i);
-    I(:) = I_app_b;                    % update with new applied current for all time points
+% Simulation Loop for Part B
+for i = 1:length(current_range)
+    I_app_b = current_range(i); % Current level being tested
+    I(:) = I_app_b; % Apply constant current across simulation
     
-    v = zeros(size(t_vector));       % initialize voltage array
-    v(1) = E_L;                     % set value of initial membrane potential
-    I_sra = zeros(size(t_vector));   % initialize adaptation current
-    spikes = zeros(size(t_vector));  % initialize vector to store spikes
+    % Initialize variables
+    v = zeros(size(t_vector)); % Membrane potential
+    v(1) = E_l; % Set value of initial membrane potential
+    I_sra = zeros(size(t_vector)); % Initialize adaptation current
+    spikes = zeros(size(t_vector)); % Initialize vector to store spikes
     
-    for j = 1:length(t_vector)-1     % simulation for all time points
-        
-        if ( v(j) > V_max )              % if there is a spike
-            v(j) = V_reset;             % reset the voltage
-            I_sra(j) = I_sra(j) + b;    % increase the adaptation current by b
-            spikes(j) = 1;              % record the spike
+    for j = 1:length(t_vector)-1        
+        if ( v(j) > V_max )
+            v(j) = V_reset; % Reset membrane potential
+            I_sra(j) = I_sra(j) + b; % Increase the adaptation current by b
+            spikes(j) = 1; % Record spike
         end
         
-        % next line integrates the voltage over time, first part is like LIF
-        % second part is an exponential spiking term
-        % third part includes adaptation
-        v(j+1) = v(j) + dt*( g_L*(E_L-v(j) + Delta_th*exp((v(j)-V_th)/Delta_th) ) ...
-            - I_sra(j) + I(j))/C_m;
+        % Update Membrane Potential
+        v(j+1) = v(j) + dt*( G_l*(E_l-v(j) + Delta_th*exp((v(j)-V_th)/Delta_th) ) - I_sra(j) + I(j))/C_m;
         
-        % next line decays the adaptation toward a steady state in between spikes
-        I_sra(j+1) = I_sra(j) + dt*( a*(v(j)-E_L) - I_sra(j) )/tau_SRA;
+        % Update Adaptation Current
+        I_sra(j+1) = I_sra(j) + dt*( a*(v(j)-E_l) - I_sra(j) )/Tau_SRA;
         
     end
     
-    spike_times = dt*find(spikes);           % extract the spike times
-    
-    if ( length(spike_times) > 1 )           % if there is more than 1 spike
-        ISIs = diff(spike_times);            % ISI = interval between spikes
-        initial_rate(i) = 1/ISIs(1);         % inverse of first ISI
-        if ( length(ISIs) > 1 )             % if there are further ISIs
-            final_rate(i) = 1/ISIs(end);     % inverse of final ISI
+    % Analyze Spike Data
+    spike_times = dt*find(spikes);        % Extract the spike times in s
+    if ( length(spike_times) > 1 )           
+        ISIs = diff(spike_times);         % Interspike intervals
+        initial_rate(i) = 1/ISIs(1);      % Initial spike rate
+        if ( length(ISIs) > 1 )             
+            final_rate(i) = 1/ISIs(end);  % Steady-state spike rate
         end
     else
-        if ( length(spike_times) == 1 )      % if there is only one spike
-            single_spike(i) = 1;             % record "1" for this trial
+        if ( length(spike_times) == 1 )      
+            single_spike(i) = 1;          % Record single spike occurrence
         end
     end
     
-    mean_V(i) = mean(v);
+    mean_V(i) = mean(v); % Average membrane potential
 end
 
 % Plot f-I Curve for Part B
